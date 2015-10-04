@@ -1,5 +1,6 @@
 package com.android.design;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -19,6 +20,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +31,12 @@ public class MainActivity extends AppCompatActivity {
             "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
             "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
             "Android", "iPhone", "WindowsMobile" };
+
+    private static String[] OS_NAME_SHORT = new String[] { "Android", "iPhone", "WindowsMobile",
+            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X"};
+
+    private static String[] OS_NAME_SHORT_MORE = new String[] { "Android", "iPhone", "WindowsMobile"};
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +49,10 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab);
         ViewPager pager = (ViewPager) findViewById(R.id.pager);
-        PagerAdapter pagerAdapter = new PagerAdapter(this,getSupportFragmentManager());
+        PagerAdapter pagerAdapter = new PagerAdapter(getSupportFragmentManager());
+        pagerAdapter.addTab("Cars", new CommonFragment(), 1);
+        pagerAdapter.addTab("Bike", new CommonFragment(), 2);
+        pagerAdapter.addTab("HMV", new CommonFragment(), 3);
         pager.setAdapter(pagerAdapter);
         tabLayout.setupWithViewPager(pager);
 
@@ -75,46 +88,76 @@ public class MainActivity extends AppCompatActivity {
 
     public class PagerAdapter extends FragmentStatePagerAdapter{
 
-        private int PAGES = 2;
-        private String[] title = {"Messages","Contacts"};
-        private Context context;
-        public PagerAdapter(Context context,FragmentManager fm) {
+        private final HashMap<Integer, Fragment> mFragments;
+        private final ArrayList<Integer> mTabNums;
+        private final ArrayList<CharSequence> mTabTitles;
+
+        @SuppressLint("UseSparseArrays")
+        public PagerAdapter(FragmentManager fm) {
             super(fm);
-            this.context = context;
+            mFragments = new HashMap<Integer, Fragment>(3);
+            mTabNums = new ArrayList<Integer>(3);
+            mTabTitles = new ArrayList<CharSequence>(3);
         }
 
-        @Override
-        public Fragment getItem(int position) {
-            switch (position){
-                case 0:
-                    return new MessageFragment();
-                case 1:
-                    return new ContactsFragment();
-                default:
-                    break;
+        public void addTab(String tabTitle, Fragment newFragment, int tabId) {
+            mTabTitles.add(tabTitle);
+            mFragments.put(tabId, newFragment);
+            mTabNums.add(tabId);
+            notifyDataSetChanged();
+        }
+
+        public Fragment getTabFragment(int tabNum) {
+            if (mFragments.containsKey(tabNum)) {
+                return mFragments.get(tabNum);
             }
             return null;
         }
 
         @Override
-        public int getCount() {
-            return PAGES;
+        public CharSequence getPageTitle(int position) {
+            return mTabTitles.get(position);
         }
 
         @Override
-        public CharSequence getPageTitle(int position) {
-            return title[position];
+        public int getCount() {
+            return mFragments.size();
         }
 
-        public View getTabView(int position) {
-            // Given you have a custom layout in `res/layout/custom_tab.xml` with a TextView and ImageView
-            View v = LayoutInflater.from(context).inflate(R.layout.tab_layout, null);
-            TextView tv = (TextView) v.findViewById(R.id.tabText);
-            tv.setText(title[position]);
-
-            return v;
+        @Override
+        public Fragment getItem(int position) {
+            if(position == 0)
+            {
+                CommonFragment frag1 = (CommonFragment) mFragments.get(mTabNums.get(position));
+                frag1.setData(OS_NAME);
+                return frag1;
+            }else if(position == 1){
+                CommonFragment frag2 = (CommonFragment) mFragments.get(mTabNums.get(position));
+                frag2.setData(OS_NAME_SHORT);
+                return frag2;
+            }else{
+                CommonFragment frag3 = (CommonFragment) mFragments.get(mTabNums.get(position));
+                frag3.setData(OS_NAME_SHORT_MORE);
+                return frag3;
+            }
         }
+    }
 
+    public static class CommonFragment extends Fragment{
+        String[] data;
+
+        public void setData(String[] data){
+            this.data = data;
+        }
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View rootView =  inflater.inflate(R.layout.layout,container,false);
+            ListView listView = (ListView) rootView.findViewById(R.id.list);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_list_item_1,data);
+            listView.setAdapter(adapter);
+            return rootView;
+        }
     }
 
     public static class MessageFragment extends Fragment{
